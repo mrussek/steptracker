@@ -6,4 +6,9 @@
     android:layout_height="match_parent"
     tools:context="com.mrussek.steptracker.MainActivity">
 
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/westeros_smallest"/>
+
 </android.support.constraint.ConstraintLayout>
