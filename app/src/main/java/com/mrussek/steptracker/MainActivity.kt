@@ -1,17 +1,11 @@
 package com.mrussek.steptracker
 
 import android.content.Context
-import android.content.pm.ActivityInfo
 import android.content.res.Resources
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.view.Window
-import android.view.WindowManager
 import com.mrussek.steptracker.render.SensorStepCounter
 import com.mrussek.steptracker.render.Shader
 import com.mrussek.steptracker.render.Texture
@@ -30,10 +24,10 @@ class MainActivity : AppCompatActivity() {
 
         val surface = Surface(this)
         setContentView(surface)
-        Shader.addSource("quadVert", loadShader(resources, R.raw.quadvert));
-        Shader.addSource("quadFrag", loadShader(resources, R.raw.quadfrag));
-        Texture.loadFile(applicationContext, R.drawable.westeros_smallest, "map");
-        Texture.loadFile(applicationContext, R.drawable.westeros_line, "line");
+        Shader.addSource("quadVert", loadShader(resources, R.raw.quadvert))
+        Shader.addSource("quadFrag", loadShader(resources, R.raw.quadfrag))
+        Texture.loadFile(applicationContext, R.drawable.westeros_smallest, "map")
+        Texture.loadFile(applicationContext, R.drawable.westeros_line, "line")
 
         val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
