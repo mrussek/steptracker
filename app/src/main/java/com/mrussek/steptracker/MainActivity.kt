@@ -12,8 +12,10 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Window
 import android.view.WindowManager
+import com.mrussek.steptracker.render.SensorStepCounter
 import com.mrussek.steptracker.render.Shader
 import com.mrussek.steptracker.render.Texture
+import rx.Subscription
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -21,12 +23,10 @@ import java.io.InputStreamReader
 class MainActivity : AppCompatActivity() {
     private val tag = javaClass.canonicalName
 
+    private lateinit var stepSubscription: Subscription
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        //setContentView(R.layout.activity_main)
-
-        //requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
 
         val surface = Surface(this)
         setContentView(surface)
@@ -37,24 +37,11 @@ class MainActivity : AppCompatActivity() {
 
         val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
-        val stepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
+        val stepCounter = SensorStepCounter(sensorManager)
 
-        if (stepCounter != null) {
-            Log.d(tag, stepCounter.name)
-
-            sensorManager.registerListener(object : SensorEventListener {
-                override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
-                    Log.d(javaClass.canonicalName, "Accuracy changed")
-                }
-
-                override fun onSensorChanged(sensorEvent: SensorEvent) {
-                    Log.d(javaClass.canonicalName, sensorEvent.values[0].toString())
-                    surface.renderer.setSteps(sensorEvent.values[0].toInt())
-                }
-            }, stepCounter, SensorManager.SENSOR_DELAY_NORMAL)
-        } else {
-            Log.d(tag, "No step sensor!!!!!")
-        }
+        stepSubscription = stepCounter.steps
+                .doOnNext { Log.d(tag, "Steps taken: $it") }
+                .subscribe { surface.renderer.setSteps(it) }
     }
 
     @Throws(IOException::class)
@@ -74,5 +61,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         return text.toString()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        stepSubscription.unsubscribe()
     }
 }
