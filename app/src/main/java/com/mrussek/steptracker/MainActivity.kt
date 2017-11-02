@@ -1,12 +1,12 @@
 package com.mrussek.steptracker
 
-import android.content.Context
 import android.content.res.Resources
-import android.hardware.SensorManager
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import com.mrussek.steptracker.render.SensorStepCounter
+import com.google.firebase.database.FirebaseDatabase
+import com.mrussek.steptracker.render.ConstantIntervalStepCounter
+import com.mrussek.steptracker.render.FirebaseSyncedStepCounter
 import com.mrussek.steptracker.render.Shader
 import com.mrussek.steptracker.render.Texture
 import rx.Subscription
@@ -29,11 +29,12 @@ class MainActivity : AppCompatActivity() {
         Texture.loadFile(applicationContext, R.drawable.westeros_smallest, "map")
         Texture.loadFile(applicationContext, R.drawable.westeros_line, "line")
 
-        val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        val stepCounter = ConstantIntervalStepCounter() // Change to `SensorStepCounter` for real data
+        val firebaseDatabase = FirebaseDatabase.getInstance()
+        val reference = firebaseDatabase.getReference("steps")
+        val firebaseStepCounter = FirebaseSyncedStepCounter(stepCounter, reference)
 
-        val stepCounter = SensorStepCounter(sensorManager)
-
-        stepSubscription = stepCounter.steps
+        stepSubscription = firebaseStepCounter.steps
                 .doOnNext { Log.d(tag, "Steps taken: $it") }
                 .subscribe { surface.renderer.setSteps(it) }
     }

@@ -4,6 +4,10 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ValueEventListener
 import rx.Emitter
 import rx.Observable
 import java.util.concurrent.TimeUnit
@@ -14,6 +18,36 @@ interface StepCounter {
 
 class ConstantIntervalStepCounter : StepCounter {
     override val steps: Observable<Int> = Observable.interval(1, TimeUnit.SECONDS).map { it.toInt() }
+}
+
+class FirebaseSyncedStepCounter(stepCounter: StepCounter, private val stepDatabaseReference: DatabaseReference) : StepCounter {
+    private val subscription = stepCounter.steps.subscribe {
+        stepDatabaseReference.setValue(it)
+    }
+
+    override val steps: Observable<Int> = Observable.create({ async ->
+        val listener = FirebaseStepValueEventListener {
+            async.onNext(it)
+        }
+
+        async.setCancellation {
+            subscription.unsubscribe()
+            stepDatabaseReference.removeEventListener(listener)
+        }
+
+        stepDatabaseReference.addValueEventListener(listener)
+
+    }, Emitter.BackpressureMode.NONE)
+
+    private class FirebaseStepValueEventListener(private val listener: (Int) -> Unit) : ValueEventListener {
+        override fun onCancelled(databaseError: DatabaseError) {
+            // Nothing yet
+        }
+
+        override fun onDataChange(dataSnapshot: DataSnapshot) {
+            listener(dataSnapshot.getValue(Int::class.java)!!)
+        }
+    }
 }
 
 class SensorStepCounter(sensorManager: SensorManager) : StepCounter {
